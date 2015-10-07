@@ -54,7 +54,7 @@ def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
         with open(meta_file, 'r') as f:
             pw_meta = yaml.safe_load(f)
 
-    if pw_max_age > -1:
+    if pw_max_age > -1 and os.path.isfile(pw_file) and os.path.isfile(meta_file):
         pw_expire_thresh = time.time() - pw_max_age * 86400
         file_times = [ os.path.getmtime(i) for i in pw_file, meta_file ]
         if not all(i > pw_expire_thresh for i in file_times):
