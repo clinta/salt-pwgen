@@ -15,6 +15,7 @@ import hashlib
 import crypt
 import base64
 import yaml
+import time
 
 
 log = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def __virtual__():
     return True
 
 
-def get_pw(pw_name, pw_store, pw_meta_dir):
+def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
     '''
     Get a password, or generate one if it doesn't exist
     '''
@@ -42,6 +43,7 @@ def get_pw(pw_name, pw_store, pw_meta_dir):
     meta_file = '{0}/{1}/{2}.meta'.format(pw_meta_dir, pw_store, pw_name)
     subprocess.call(['pass', 'git', 'pull'], env=pass_env)
     pw_file_hash = 'default_file_hash'
+    pw_expire = False
 
     if os.path.isfile(pw_file):
         with open(pw_file, 'r') as f:
@@ -52,12 +54,18 @@ def get_pw(pw_name, pw_store, pw_meta_dir):
         with open(meta_file, 'r') as f:
             pw_meta = yaml.safe_load(f)
 
+    if pw_max_age > -1:
+        pw_expire_thresh = time.time() - pw_max_age * 86400
+        file_times = [ os.path.getmtime(i) for i in pw_file, meta_file ]
+        if not all(i > pw_expire_thresh for i in file_times):
+            pw_expire = True
+
     if not isinstance(pw_meta, dict) or 'pw_file_sha256' not in pw_meta:
         pw_meta = {'pw_file_sha256': 'default_meta_hash'}
 
     print pw_meta
     print pw_file_hash
-    if pw_meta['pw_file_sha256'] != pw_file_hash:
+    if pw_meta['pw_file_sha256'] != pw_file_hash or pw_expire:
         pass_output = subprocess.check_output(['pass', 'generate', '-n', '-f', pw_name, '16'], env=pass_env)
         subprocess.call(['pass', 'git', 'push'], env=pass_env)
         pass_plaintext = ansi_escape.sub('', pass_output).strip().split('\n')[-1]
