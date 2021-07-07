@@ -4,7 +4,6 @@ Module for getting and generating random passwords for storage in a pass db.
 '''
 
 # Import python libs
-from __future__ import absolute_import
 import logging
 
 import salt.utils
@@ -56,15 +55,15 @@ def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
 
     if pw_max_age > -1 and os.path.isfile(pw_file) and os.path.isfile(meta_file):
         pw_expire_thresh = time.time() - pw_max_age * 86400
-        file_times = [ os.path.getmtime(i) for i in pw_file, meta_file ]
+        file_times = [ os.path.getmtime(i) for i in (pw_file, meta_file) ]
         if not all(i > pw_expire_thresh for i in file_times):
             pw_expire = True
 
     if not isinstance(pw_meta, dict) or 'pw_file_sha256' not in pw_meta:
         pw_meta = {'pw_file_sha256': 'default_meta_hash'}
 
-    print pw_meta
-    print pw_file_hash
+    print(pw_meta)
+    print(pw_file_hash)
     if pw_meta['pw_file_sha256'] != pw_file_hash or pw_expire:
         pass_output = subprocess.check_output(['pass', 'generate', '-n', '-f', pw_name, '16'], env=pass_env)
         subprocess.call(['pass', 'git', 'push'], env=pass_env)
