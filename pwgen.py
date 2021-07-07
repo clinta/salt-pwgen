@@ -46,7 +46,7 @@ def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
 
     if os.path.isfile(pw_file):
         with open(pw_file, 'r') as f:
-            pw_file_hash = hashlib.sha256(f.read()).hexdigest()
+            pw_file_hash = hashlib.sha256(f.read().encode('utf-8')).hexdigest()
 
     pw_meta = {'pw_file_sha256': 'default_meta_hash'}
     if os.path.isfile(meta_file):
