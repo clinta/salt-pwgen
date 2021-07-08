@@ -45,8 +45,8 @@ def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
     pw_expire = False
 
     if os.path.isfile(pw_file):
-        with open(pw_file, 'r') as f:
-            pw_file_hash = hashlib.sha256(f.read().encode('utf-8')).hexdigest()
+        with open(pw_file, 'rb') as f:
+            pw_file_hash = hashlib.sha256(f.read()).hexdigest()
 
     pw_meta = {'pw_file_sha256': 'default_meta_hash'}
     if os.path.isfile(meta_file):
@@ -67,10 +67,10 @@ def get_pw(pw_name, pw_store, pw_meta_dir, pw_max_age=-1):
     if pw_meta['pw_file_sha256'] != pw_file_hash or pw_expire:
         pass_output = subprocess.check_output(['pass', 'generate', '-n', '-f', pw_name, '16'], env=pass_env)
         subprocess.call(['pass', 'git', 'push'], env=pass_env)
-        pass_plaintext = ansi_escape.sub('', pass_output).strip().split('\n')[-1]
+        pass_plaintext = ansi_escape.sub('', pass_output.decode()).strip().split('\n')[-1]
         pw_meta['pw_hash'] = crypt.crypt(pass_plaintext, '$6${0}$'.format(base64.b64encode(os.urandom(16))[:16]))
 
-        with open(pw_file, 'r') as f:
+        with open(pw_file, 'rb') as f:
             pw_file_hash = hashlib.sha256(f.read()).hexdigest()
         pw_meta['pw_file_sha256'] = pw_file_hash
 
